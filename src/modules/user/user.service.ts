@@ -21,7 +21,6 @@ export class UserService {
     const user = this.prisma.user.create({
       data: {
         ...data, // Usar todos os dados do DTO
-        createdAt: new Date(), // Atribuir o valor atual da data/hora do servidor
         password: hashedPassword, // salvar a senha encriptada
       },
     });
@@ -34,7 +33,9 @@ export class UserService {
   }
 
   findAll() {
-    return `This action returns all user`;
+    const users = this.prisma.user.findMany();
+
+    return users;
   }
 
   async findOne(id: number) {
@@ -57,11 +58,88 @@ export class UserService {
 
     return user;
   }
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, data: UpdateUserDto) {
+    const user = await this.prisma.user.update({
+      data,
+      where: {
+        id: id,
+      },
+    });
+
+    return user;
   }
 
   remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+
+  async followUser(followerId: number, followingId: number) {
+    const follower = await this.prisma.user.findUnique({
+      where: { id: followerId },
+    });
+    const following = await this.prisma.user.findUnique({
+      where: { id: followingId },
+    });
+
+    if (!follower || !following) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    const existingFollower = await this.prisma.follower.findUnique({
+      where: { followerId_followingId: { followerId, followingId } },
+    });
+
+    if (existingFollower) {
+      throw new Error('Usuário já segue esse perfil');
+    }
+
+    const newFollower = await this.prisma.follower.create({
+      data: {
+        follower: {
+          connect: { id: followerId },
+        },
+        following: {
+          connect: { id: followingId },
+        },
+      },
+    });
+
+    return newFollower;
+  }
+
+  async unfollowUser(followerId: number, followingId: number) {
+    const existingFollower = await this.prisma.follower.findUnique({
+      where: { followerId_followingId: { followerId, followingId } },
+    });
+
+    if (!existingFollower) {
+      throw new Error('Usuário não segue esse perfil');
+    }
+
+    const deletedFollower = await this.prisma.follower.delete({
+      where: { id: existingFollower.id },
+    });
+
+    return deletedFollower;
+  }
+
+  async getFollowers(userId: number) {
+    return this.prisma.user
+      .findUnique({
+        where: { id: userId },
+        include: { followers: true },
+      })
+      .then((user) => user.followers);
+  }
+
+  async getFollowing(userId: number) {
+    const followers = await this.prisma.follower.findMany({
+      where: { followerId: userId },
+      select: { followingId: true },
+    });
+    const followingIds = followers.map((f) => f.followingId);
+    return this.prisma.user.findMany({
+      where: { id: { in: followingIds } },
+    });
   }
 }

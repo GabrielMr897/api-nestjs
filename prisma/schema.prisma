@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,16 +8,18 @@ datasource db {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  name     String?
-  email    String?  @unique
-  password String?
-  image    String?
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @updatedAt @map(name: "updated_at")
-  posts    Post[]
-  comments Comment[]
-  likes    Like[]
+  id                    Int                @id @default(autoincrement())
+  name                  String?
+  email                 String?            @unique
+  password              String?
+  image                 String?
+  createdAt             DateTime           @default(now()) @map(name: "created_at")
+  updatedAt             DateTime           @updatedAt @map(name: "updated_at")
+  posts                 Post[]
+  comments              Comment[]
+  likes                 Like[]
+  followers Follower[] @relation("followingTo")
+  followings Follower[] @relation("followerTo")
 }
 
 model Post {
@@ -48,4 +47,16 @@ model Like {
   userId Int
   post   Post?   @relation(fields: [postId], references: [id])
   postId Int?
+}
+
+model Follower {
+  id        Int       @id @default(autoincrement())
+  follower  User      @relation("followingTo", fields: [followerId], references: [id])
+  followerId Int
+  following User      @relation("followerTo", fields: [followingId], references: [id])
+  followingId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([followerId, followingId])
 }
