@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Request,
 } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -25,9 +26,11 @@ export class PostController {
     return this.postService.findAll();
   }
 
-  @Get('/getPostsF/:id')
-  findPostsFollowing(@Param('id') id: string) {
-    return this.postService.getPostsFromFollowing(Number(id));
+  @Get('/getPostsF')
+  async getPostsFromFollowing(@Request() req) {
+    console.log(req);
+    const userId = req.body.id;
+    return this.postService.getPostsFromFollowing(userId);
   }
 
   @Get(':id')
