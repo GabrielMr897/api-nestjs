@@ -15,9 +15,9 @@ import { PostService } from './post.service';
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postService.create(createPostDto);
+  @Post(':id')
+  create(@Body() createPostDto: CreatePostDto, @Param('id') id: string) {
+    return this.postService.create(createPostDto, Number(id));
   }
 
   @Get()
@@ -25,18 +25,23 @@ export class PostController {
     return this.postService.findAll();
   }
 
+  @Get('/getPostsF/:id')
+  findPostsFollowing(@Param('id') id: string) {
+    return this.postService.getPostsFromFollowing(Number(id));
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.postService.findOne(+id);
+    return this.postService.findOne(Number(id));
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postService.update(+id, updatePostDto);
+    return this.postService.update(Number(id), updatePostDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.postService.remove(+id);
+    return this.postService.remove(Number(id));
   }
 }

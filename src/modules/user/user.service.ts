@@ -1,7 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/database/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -67,6 +73,24 @@ export class UserService {
     });
 
     return user;
+  }
+
+  async updatePassword(payload: UpdatePasswordDto, id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+    if (!user) {
+      throw new HttpException('invalid_credentials', HttpStatus.UNAUTHORIZED);
+    }
+    // compare passwords
+    const areEqual = await bcrypt.compare(payload.old_password, user.password);
+    if (!areEqual) {
+      throw new HttpException('invalid_credentials', HttpStatus.UNAUTHORIZED);
+    }
+    return await this.prisma.user.update({
+      where: { id },
+      data: { password: await bcrypt.hash(payload.new_password, 10) },
+    });
   }
 
   remove(id: number) {

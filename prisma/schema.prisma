@@ -18,6 +18,8 @@ model User {
   posts                 Post[]
   comments              Comment[]
   likes                 Like[]
+  role Role @default(CLIENT)
+
   followers Follower[] @relation("followingTo")
   followings Follower[] @relation("followerTo")
 }
@@ -59,4 +61,15 @@ model Follower {
   updatedAt DateTime @updatedAt
 
   @@unique([followerId, followingId])
+}
+
+
+model Auth {
+  accessToken String @id
+}
+
+
+enum Role {
+  CLIENT
+  ADMIN
 }
