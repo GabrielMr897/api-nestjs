@@ -47,7 +47,11 @@ export class PostService {
             author: true,
           },
         },
-        likes: true,
+        likes: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
 
