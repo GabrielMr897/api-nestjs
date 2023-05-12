@@ -124,12 +124,15 @@ export class UserService {
   }
 
   async getFollowers(userId: number) {
-    return this.prisma.user
-      .findUnique({
-        where: { id: userId },
-        include: { followers: true },
-      })
-      .then((user) => user.followers);
+    const following = await this.prisma.follower.findMany({
+      where: { followingId: userId },
+      select: { followerId: true },
+    });
+
+    const followerIds = following.map((f) => f.followerId);
+    return this.prisma.user.findMany({
+      where: { id: { in: followerIds } },
+    });
   }
 
   async getFollowing(userId: number) {
