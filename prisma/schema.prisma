@@ -18,7 +18,7 @@ model User {
   posts                 Post[]
   comments              Comment[]
   likes                 Like[]
-  role Role @default(CLIENT)
+  role                  Role[]           @relation("UserRoles")
 
   followers Follower[] @relation("followingTo")
   followings Follower[] @relation("followerTo")
@@ -69,7 +69,8 @@ model Auth {
 }
 
 
-enum Role {
-  CLIENT
-  ADMIN
+model Role {
+  id Int @id @default(autoincrement())
+  nameR String
+  user User[] @relation("UserRoles")
 }
