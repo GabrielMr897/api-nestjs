@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/database/prisma.service';
+import { UserRole } from '../role/enum/userRoles';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -15,11 +16,21 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateUserDto) {
+    const role = await this.prisma.role.findFirst({
+      where: {
+        nameR: UserRole.Client,
+      },
+    });
+
     const emailUserExists = this.prisma.user.findUnique({
       where: {
         email: data.email,
       },
     });
+
+    if (!emailUserExists) {
+      throw new Error('email already exists');
+    }
 
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(data.password, saltRounds);
@@ -28,12 +39,13 @@ export class UserService {
       data: {
         ...data, // Usar todos os dados do DTO
         password: hashedPassword, // salvar a senha encriptada
+        role: {
+          connect: {
+            id: role.id,
+          },
+        },
       },
     });
-
-    if (!emailUserExists) {
-      throw new Error('email already exists');
-    }
 
     return user;
   }
